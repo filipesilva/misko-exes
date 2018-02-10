@@ -1,1 +1,2 @@
-console.log('hello world')
+import './exe-1';
+import './exe-2';
