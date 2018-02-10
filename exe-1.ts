@@ -19,9 +19,18 @@ class Sum implements Node {
   toString = () => `${this.val1.toString()}+${this.val2.toString()}`;
 }
 
+class Multiplication implements Node {
+  constructor(private val1: Node, private val2: Node) { }
+  eval = () => this.val1.eval() * this.val2.eval();
+  toString = () => `${this.val1.toString()}x${this.val2.toString()}`;
+}
+
 // Tests
 expect(new Value(5).eval(), 5);
 expect(new Value(5).toString(), '5');
 expect(new Sum(new Value(1), new Value(2)).eval(), 3);
 expect(new Sum(new Value(1), new Sum(new Value(2), new Value(3))).eval(), 6);
 expect(new Sum(new Value(1), new Sum(new Value(2), new Value(3))).toString(), '1+2+3');
+expect(new Multiplication(new Value(1), new Value(2)).eval(), 2);
+expect(new Multiplication(new Value(1), new Multiplication(new Value(2), new Value(3))).eval(), 6);
+expect(new Multiplication(new Value(1), new Multiplication(new Value(2), new Value(3))).toString(), '1x2x3');
