@@ -41,6 +41,28 @@ class Multiplication implements Node {
   );
 }
 
+class Subtraction implements Node {
+  prio = 1;
+  constructor(private val1: Node, private val2: Node) { }
+  eval = () => this.val1.eval() - this.val2.eval();
+  toString = (callerPrio = 0) => wrapParens(
+    `${this.val1.toString(this.prio)}-${this.val2.toString(Infinity)}`,
+    this.prio,
+    callerPrio
+  );
+}
+
+class Division implements Node {
+  prio = 2;
+  constructor(private val1: Node, private val2: Node) { }
+  eval = () => this.val1.eval() / this.val2.eval();
+  toString = (callerPrio = 0) => wrapParens(
+    `${this.val1.toString(this.prio)}/${this.val2.toString(Infinity)}`,
+    this.prio,
+    callerPrio
+  );
+}
+
 // Tests
 expect(new Value(5).eval(), 5);
 expect(new Value(5).toString(), '5');
@@ -62,3 +84,65 @@ expect(new Sum(
   ),
   new Value(4)
 ).toString(), '(1+2)x3+4');
+expect(new Subtraction(
+  new Value(8),
+  new Sum(
+    new Value(4),
+    new Value(2)
+  )
+).toString(), '8-(4+2)');
+expect(new Sum(
+  new Subtraction(
+    new Value(8),
+    new Value(4)
+  ),
+  new Value(2),
+).toString(), '8-4+2');
+expect(new Division(
+  new Value(8),
+  new Division(
+    new Value(4),
+    new Value(2)
+  )
+).toString(), '8/(4/2)');
+expect(new Division(
+  new Division(
+    new Value(8),
+    new Value(4)
+  ),
+  new Value(2),
+).toString(), '8/4/2');
+expect(new Division(
+  new Value(8),
+  new Division(
+    new Value(4),
+    new Division(
+      new Value(2),
+      new Value(1)
+    )
+  )
+).toString(), '8/(4/(2/1))');
+expect(new Division(
+  new Division(
+    new Value(8),
+    new Value(4),
+  ),
+  new Division(
+    new Value(2),
+    new Value(1)
+  )
+).toString(), '8/4/(2/1)');
+expect(new Division(
+  new Subtraction(
+    new Value(8),
+    new Value(4)
+  ),
+  new Value(2),
+).toString(), '(8-4)/2');
+expect(new Subtraction(
+  new Value(8),
+  new Division(
+    new Value(4),
+    new Value(2)
+  )
+).toString(), '8-(4/2)');
