@@ -7,10 +7,12 @@ interface HashEntry<KeyT, ValueT> {
   value: ValueT;
 }
 
+// Does not resize.
 class HashMap<KeyT, ValueT> {
-  // Does not resize.
-  private _size = 100;
+  // A prime as size is needed for the used universal hashing function (see this._hashFn).
+  private _size = 179;
   private _buckets = new Array<HashEntry<KeyT, ValueT>[]>(this._size);
+  private _randomTuple = [];
 
   constructor() { }
 
@@ -71,14 +73,48 @@ class HashMap<KeyT, ValueT> {
     return this._buckets[this._hashFn(key)] || [];
   }
 
+  // Universal hashing function as described in Introduction to Algorithms (2005 MIT).
+  // See https://youtu.be/s7QSM_hlS1U?t=24m51s proof.
+  // The general idea is that we are
+  // - decompose the key into a tuple of digits using this._size as a base
+  // - multiplying those digits by a random number in the same base
+  // - reduce them using modulus
+  // Random tuple is generated lazily, and this._size must be a prime.
   private _hashFn(key: KeyT): number {
-    // Can only hash string keys.
-    const stringKey = key as any as string;
-    let hash = 0;
-    for (let idx = 0; idx < stringKey.length; idx++) {
-      hash = (hash + stringKey.charCodeAt(idx)) % this._size;
+    if (typeof key !== 'string') {
+      throw new Error('Only string keys are supported.');
     }
+    const keyTuple = this._stringToTuple(key);
+    const randomTuple = this._getRandomTuple(key.length);
+    const dotProduct = keyTuple.map((value, idx) => value * randomTuple[idx]);
+    const hash = dotProduct.reduce((carry, curr) => ((carry + curr) % this._size), 0);
     return hash;
+  }
+
+  // Convert string into base this._size tuple, supporting unicode.
+  // Treats the code point array as being a series of digits and converts the base.
+  private _stringToTuple(string: string) {
+    const codePoints = Array.from(string).map(singleCharStr => singleCharStr.charCodeAt(0));
+    let carry = 0;
+    const tuple = [];
+    for (let idx = 0; idx < codePoints.length || carry > 0; idx++) {
+      const currNumber = codePoints[idx] + carry;
+      const remainder = currNumber % this._size;
+      const quotient = Math.trunc(currNumber / this._size);
+      carry = quotient;
+      tuple.push(remainder);
+    }
+    return tuple;
+  }
+
+  // Lazy generated random tuple between 0 and this.size -1.
+  // For use in _hashFn.
+  private _getRandomTuple(length: number) {
+    const missingTuples = length - this._randomTuple.length;
+    for (let i = 0; i < missingTuples; i++) {
+      this._randomTuple.push(Math.floor(Math.random() * Math.floor(this._size - 1)));
+    }
+    return this._randomTuple;
   }
 }
 
@@ -102,4 +138,3 @@ expect(stringHashMap.get(key2), val2);
 stringHashMap.delete(key1);
 expect(stringHashMap.has(key1), false);
 expect(stringHashMap.has(key2), true);
-
