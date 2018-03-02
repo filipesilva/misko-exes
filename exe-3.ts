@@ -45,7 +45,7 @@ class HashMap<KeyT, ValueT> {
     if (entry.key === key) {
       return entry.value;
     }
-    throw new Error(`Cannot delete get "${key}", it cannot not be found in HashMap.`);
+    throw new Error(`Cannot get key "${key}", it cannot not be found in HashMap.`);
   }
 
   delete(key: KeyT): void {
